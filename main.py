@@ -1,15 +1,25 @@
+from argparse import ArgumentParser
+
 from simpy import Environment
 
 from printers import PrinterInfo, PrinterFleet
+from config import Config, parse_config
 
 class Simulation:
-    def __init__(self):
+    def __init__(self, config_path: str):
+        """
+        Creates a new simulation configured from config_path
+        """
+        
+        # load config
+        config: Config = parse_config(config_path)
+        
         # available captital
         self.capital: int = 10_000
         
         # create environment
         env = Environment()
-        self.arrival_rate = 0.25
+        self.arrival_rate = config.arrival_rate
         self.service_rate = 0.50
         
         self.steps = 100
@@ -35,4 +45,15 @@ class Simulation:
             env.process(self.fleet.print_part(env, service_time))
 
 if __name__ == "__main__":
-    sim = Simulation() 
+    # parse config file
+    parser = ArgumentParser()
+    parser.add_argument(
+        'config',
+        default="config/main.yaml",
+        nargs="?",
+        help="The config file location",
+    )
+    
+    args = parser.parse_args()
+    
+    sim = Simulation(args.config)
