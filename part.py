@@ -1,6 +1,8 @@
 from typing import Literal
 from dataclasses import dataclass
 
+SIZES: list[Literal['small', 'medium', 'large']] = ['small', 'medium', 'large']
+
 @dataclass
 class Part:
     """The parameters and attributes of a single part"""

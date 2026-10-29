@@ -26,13 +26,17 @@ class Simulation:
         self.steps = 100
         
         # current printers
-        self.fleet = PrinterFleet(env, [PrinterInfo(1.0j, 'medium'), PrinterInfo(1.0j, 'medium')])
+        self.fleet = PrinterFleet(env, [PrinterInfo(1.0, 'small'), PrinterInfo(1.0, 'medium')])
         
         # run simulation
         env.process(self.process(env))
         env.run(until=self.steps)
     
     def process(self, env: Environment):
+        """
+        The main simulation loop
+        """
+        
         while True:
             # wait for new part
             arrival_time = 1.0 / self.arrival_rate
@@ -41,7 +45,7 @@ class Simulation:
             print(f"arrived: {env.now}")
             
             # select random part
-            part = Part(2.0, 'small')
+            part = Part(2.0, 'medium')
             
             env.process(self.fleet.print_part(env, part))
 
