@@ -4,6 +4,7 @@ from simpy import Environment
 
 from printers import PrinterInfo, PrinterFleet
 from config import Config, parse_config
+from part import Part
 
 class Simulation:
     def __init__(self, config_path: str):
@@ -25,7 +26,7 @@ class Simulation:
         self.steps = 100
         
         # current printers
-        self.fleet = PrinterFleet(env, [PrinterInfo(1.0), PrinterInfo(1.0)])
+        self.fleet = PrinterFleet(env, [PrinterInfo(1.0j, 'medium'), PrinterInfo(1.0j, 'medium')])
         
         # run simulation
         env.process(self.process(env))
@@ -39,10 +40,10 @@ class Simulation:
             
             print(f"arrived: {env.now}")
             
-            # print part
-            service_time = 1.0 / self.service_rate
+            # select random part
+            part = Part(2.0, 'small')
             
-            env.process(self.fleet.print_part(env, service_time))
+            env.process(self.fleet.print_part(env, part))
 
 if __name__ == "__main__":
     # parse config file
