@@ -25,7 +25,7 @@ class Simulation:
         self.steps = 100
         
         # current printers
-        self.fleet = PrinterFleet(env, [PrinterInfo(1.0)])
+        self.fleet = PrinterFleet(env, [PrinterInfo(1.0), PrinterInfo(1.0)])
         
         # run simulation
         env.process(self.process(env))

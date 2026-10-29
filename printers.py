@@ -16,10 +16,29 @@ class Printer(Resource):
 class PrinterFleet:
     def __init__(self, env: Environment, printers: list[PrinterInfo]):
         self.printers = [Printer(env, info.service_modifier) for info in printers]
+        
+        self.queue = []
     
     def print_part(self, env: Environment, service_time: float):
-        with self.printers[0].request() as request:
+        # collect free printers
+        free_printers = [i for i in range(len(self.printers)) if self.printers[i].count == 0]
+        
+        # select a free printer
+        if free_printers:
+            yield env.process(self.process_part(env, free_printers[0], service_time))
+        # add to pool queue
+        else:
+            self.queue.append(service_time)
+    
+    def process_part(self, env: Environment, printer_id: int, service_time: float):
+        with self.printers[printer_id].request() as request:
             yield request
             yield env.timeout(service_time)
             
             print(f"printed: {env.now}")
+        
+        # check queued items
+        if self.queue:
+            service_time = self.queue.pop()
+            
+            self.process_part(env, printer_id, service_time)
