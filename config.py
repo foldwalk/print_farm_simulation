@@ -1,13 +1,28 @@
 import os
 from pathlib import Path
+
+from typing import Literal
 from dataclasses import dataclass
 
 from omegaconf import OmegaConf
 
 @dataclass
+class PartDistribution:
+    weight: float
+    """The weight for this part used for a weighted random distribution"""
+    
+    size: Literal['small', 'medium', 'large']
+    """The size of this part. Determines what printer can print this"""
+    
+    print_time: float
+    """The time required for a print to finish"""
+
+@dataclass
 class Config:
-    arrival_rate: float = 4.0
+    arrival_rate: float
     """The average number of arrivals per hour"""
+    
+    part_distribution: list[PartDistribution]
 
 def parse_config(path: str | Path = "") -> Config:
     """

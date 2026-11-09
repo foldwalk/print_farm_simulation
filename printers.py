@@ -9,11 +9,11 @@ from part import Part, SIZES
 class PrinterInfo:
     """The parameters and attributes for a single printer"""
     
-    service_modifier: float
-    """How much to multiply service time by"""
-    
     size: Literal['small', 'medium', 'large']
     """The size of this printer. Determines what parts this can print"""
+    
+    service_modifier: float
+    """How much to multiply service time by"""
 
 class Printer(Resource):
     def __init__(self, env: Environment, info: PrinterInfo):
@@ -79,6 +79,13 @@ class PrinterFleet:
         self.check_queue(env)
     
     def check_queue(self, env: Environment):
+        """
+        Checks to see if there are parts remaining in the queue
+        """
+        
+        if not self.queue:
+            return
+        
         printer: Printer
         part: Part
         
@@ -110,32 +117,11 @@ class PrinterFleet:
             return None
         
         # return printer via priority (WIP)
-        return free_printers[0]
-    
-    # def print_part(self, env: Environment, part: Part):
-    #     """
-    #     Prints the given `part`
-    #     """
+        return self.sort_printers(free_printers)[0]
+
+    def sort_printers(self, printers: list[Printer]) -> list[Printer]:
+        """
+        Sorts the `printers` via the selected sorting method
+        """
         
-    #     # collect free printers
-    #     free_printers = [i for i in range(len(self.printers)) if self.printers[i].count == 0]
-        
-    #     # select a free printer
-    #     if free_printers:
-    #         yield env.process(self.process_part(env, free_printers[0], part.print_time))
-    #     # add to pool queue
-    #     else:
-    #         self.queue.append(part.print_time)
-    
-    # def process_part(self, env: Environment, printer_id: int, print_time: float):
-    #     with self.printers[printer_id].request() as request:
-    #         yield request
-    #         yield env.timeout(print_time)
-            
-    #         print(f"printed: {env.now}")
-        
-    #     # check queued items
-    #     if self.queue:
-    #         print_time = self.queue.pop()
-            
-    #         self.process_part(env, printer_id, print_time)
+        return sorted(printers, key=lambda p: p.service_modifier)
