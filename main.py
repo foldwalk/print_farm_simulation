@@ -3,25 +3,25 @@ from argparse import ArgumentParser
 from simpy import Environment
 
 from printers import PrinterInfo, PrinterFleet
-from config import Config, parse_config
+from config import BusinessConfig, parse_business_config
 from part import Part, PartPool
 
 class Simulation:
-    def __init__(self, config_path: str):
+    def __init__(self, business_path: str, space_path: str):
         """
         Creates a new simulation configured from config_path
         """
         
         # load config
-        config: Config = parse_config(config_path)
+        business_config: BusinessConfig = parse_business_config(business_path)
+        space_config: BusinessConfig = parse_business_config(space_path)
         
         # available captital
         self.capital: int = 10_000
         
         # create environment
         env = Environment()
-        self.arrival_rate = config.arrival_rate
-        self.service_rate = 0.50
+        self.arrival_rate = business_config.arrival_rate
         
         self.steps = 100
         
@@ -29,7 +29,7 @@ class Simulation:
         self.fleet = PrinterFleet(env, [PrinterInfo('small', 0.75), PrinterInfo('medium', 1.0)])
         
         # create parts
-        self.part_pool = PartPool(config.part_distribution)
+        self.part_pool = PartPool(business_config.part_distribution)
         
         # run simulation
         env.process(self.process(env))
@@ -56,12 +56,18 @@ if __name__ == "__main__":
     # parse config file
     parser = ArgumentParser()
     parser.add_argument(
-        'config',
-        default="config/main.yaml",
+        'business_config',
+        default="toy_shop",
         nargs="?",
-        help="The config file location",
+        help="The business config file location",
+    )
+    parser.add_argument(
+        'space_config',
+        default="single_desk",
+        nargs="?",
+        help="The space config file location",
     )
     
     args = parser.parse_args()
     
-    sim = Simulation(args.config)
+    sim = Simulation(args.business_config, args.space_config)

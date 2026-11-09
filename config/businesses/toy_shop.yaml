@@ -1,0 +1,12 @@
+arrival_rate: 0.5
+number_of_jobs: 10
+part_distribution:
+- weight: 0.50
+  size: 'small'
+  print_time: 2.0
+- weight: 0.30
+  size: 'small'
+  print_time: 1.5
+- weight: 0.20
+  size: 'medium'
+  print_time: 4.0

@@ -1,8 +1,0 @@
-arrival_rate: 0.5
-part_distribution:
-- weight: 0.50
-  size: 'medium'
-  print_time: 2.0
-- weight: 0.50
-  size: 'small'
-  print_time: 2.0

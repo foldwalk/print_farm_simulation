@@ -18,15 +18,27 @@ class PartDistribution:
     """The time required for a print to finish"""
 
 @dataclass
-class Config:
+class BusinessConfig:
     arrival_rate: float
     """The average number of arrivals per hour"""
     
+    number_of_jobs: int
+    """The number of jobs occuring in a day"""
+    
     part_distribution: list[PartDistribution]
+    """The distribution of parts for a business"""
 
-def parse_config(path: str | Path = "") -> Config:
+@dataclass
+class SpaceConfig:
+    printer_slots: int
+    """The maximum number of printers that can fit in this space"""
+    
+    initial_capital: int
+    """The amount of money to initially spend on printers"""
+
+def parse_business_config(path: str | Path = "") -> BusinessConfig:
     """
-    Parses the config file found at `path`. If `path` is empty or the file at `path`
+    Parses the business config file found at `path`. If `path` is empty or the file at `path`
     does not exist, the default config is returned
     """
     
@@ -34,8 +46,30 @@ def parse_config(path: str | Path = "") -> Config:
     if isinstance(path, str):
         path = Path(path)
     
+    path = f"config/businesses/{path}"
+    
     # parse config
-    conf = OmegaConf.structured(Config)
+    conf = OmegaConf.structured(BusinessConfig)
+    if os.path.exists(path):
+        data = OmegaConf.load(path)
+        return OmegaConf.merge(conf, data)
+    
+    return conf
+
+def parse_space_config(path: str | Path = "") -> SpaceConfig:
+    """
+    Parses the space config file found at `path`. If `path` is empty or the file at `path`
+    does not exist, the default config is returned
+    """
+    
+    # convert to Path
+    if isinstance(path, str):
+        path = Path(path)
+    
+    path = f"config/spaces/{path}"
+    
+    # parse config
+    conf = OmegaConf.structured(SpaceConfig)
     if os.path.exists(path):
         data = OmegaConf.load(path)
         return OmegaConf.merge(conf, data)

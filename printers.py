@@ -5,16 +5,34 @@ from simpy import Environment, Resource
 
 from part import Part, SIZES
 
+# ============================================================ #
+# = Config classes
+# ============================================================ #
 @dataclass
 class PrinterInfo:
     """The parameters and attributes for a single printer"""
+    
+    cost: int
+    """How much this printer costs to purchase"""
     
     size: Literal['small', 'medium', 'large']
     """The size of this printer. Determines what parts this can print"""
     
     service_modifier: float
     """How much to multiply service time by"""
+    
+    failure_rate: float
+    """How often this printer encounters a print failure"""
+    
+    repair_time: float
+    """How long the printer takes to repair before it can be used again"""
+    
+    clean_time: float
+    """How long the printer takes to clean off once a print is finished"""
 
+# ============================================================ #
+# = Printer Logic
+# ============================================================ #
 class Printer(Resource):
     def __init__(self, env: Environment, info: PrinterInfo):
         """
@@ -125,3 +143,28 @@ class PrinterFleet:
         """
         
         return sorted(printers, key=lambda p: p.service_modifier)
+
+# ============================================================ #
+# = Defined Printers
+# ============================================================ #
+NAMED_PRINTERS: dict[str, PrinterInfo] = {
+    # === Entry-Level Printers === #
+    'miniforge_e1': PrinterInfo(400, 'small',  1.30, 0.025, 30.0 / 60.0, 5.0 / 60.0),
+    'miniforge_e2': PrinterInfo(600, 'medium', 1.20, 0.030, 30.0 / 60.0, 8.0 / 60.0),
+    'miniforge_e3': PrinterInfo(900, 'medium', 1.10, 0.035, 20.0 / 60.0, 8.0 / 60.0),
+    
+    # === Hobbyist Printers === #
+    'makermax_h1':  PrinterInfo(1200, 'small',  0.95, 0.040, 45.0 / 60.0, 6.0 / 60.0),
+    'makermax_h2':  PrinterInfo(1600, 'medium', 0.90, 0.050, 45.0 / 60.0, 8.0 / 60.0),
+    'makermax_h3':  PrinterInfo(2400, 'large',  0.90, 0.060, 60.0 / 60.0, 10.0 / 60.0),
+    
+    # === Professional Printers === #
+    'profab_p1':  PrinterInfo(4000, 'small',  1.00, 0.015, 45.0 / 60.0, 5.0 / 60.0),
+    'profab_p2':  PrinterInfo(5500, 'medium', 0.95, 0.010, 45.0 / 60.0, 5.0 / 60.0),
+    'profab_p3':  PrinterInfo(7000, 'large',  0.85, 0.010, 30.0 / 60.0, 4.0 / 60.0),
+    
+    # === Rapid Development Printers === #
+    'turboprint_r1':  PrinterInfo(3000, 'small',  0.70, 0.050, 60.0 / 60.0, 8.0 / 60.0),
+    'turboprint_r2':  PrinterInfo(4500, 'medium', 0.60, 0.075, 75.0 / 60.0, 10.0 / 60.0),
+    'turboprint_r3':  PrinterInfo(6000, 'large',  0.50, 0.100, 90.0 / 60.0, 12.0 / 60.0),
+}
