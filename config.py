@@ -43,14 +43,11 @@ def parse_business_config(path: str | Path = "") -> BusinessConfig:
     """
     
     # convert to Path
-    if isinstance(path, str):
-        path = Path(path)
-    
-    path = f"config/businesses/{path}"
+    path = Path(f"config/businesses/{path}.yaml")
     
     # parse config
     conf = OmegaConf.structured(BusinessConfig)
-    if os.path.exists(path):
+    if path.exists():
         data = OmegaConf.load(path)
         return OmegaConf.merge(conf, data)
     
@@ -63,14 +60,11 @@ def parse_space_config(path: str | Path = "") -> SpaceConfig:
     """
     
     # convert to Path
-    if isinstance(path, str):
-        path = Path(path)
-    
-    path = f"config/spaces/{path}"
+    path = Path(f"config/spaces/{path}.yaml")
     
     # parse config
     conf = OmegaConf.structured(SpaceConfig)
-    if os.path.exists(path):
+    if path.exists():
         data = OmegaConf.load(path)
         return OmegaConf.merge(conf, data)
     

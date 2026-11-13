@@ -1,9 +1,12 @@
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 from dataclasses import dataclass
 
-from simpy import Environment, Resource
+from simpy import Resource
 
 from part import Part, SIZES
+
+if TYPE_CHECKING:
+    from simulation import Simulation
 
 # ============================================================ #
 # = Config classes
@@ -34,12 +37,12 @@ class PrinterInfo:
 # = Printer Logic
 # ============================================================ #
 class Printer(Resource):
-    def __init__(self, env: Environment, info: PrinterInfo):
+    def __init__(self, sim: "Simulation", info: PrinterInfo):
         """
         Creates a new printer `simpy.Resource` with a configurable `service_modifier`
         """
         
-        super().__init__(env)
+        super().__init__(sim.env)
         
         # unload info
         self.service_modifier = info.service_modifier
@@ -60,16 +63,16 @@ class Printer(Resource):
         return True
 
 class PrinterFleet:
-    def __init__(self, env: Environment, printers: list[PrinterInfo]):
+    def __init__(self, sim: "Simulation", printers: list[PrinterInfo]):
         """
         Creates a fleet of printers based on the `PrinterInfo` from `printers`
         """
         
-        self.printers = [Printer(env, info) for info in printers]
+        self.printers = [Printer(sim, info) for info in printers]
         
         self.queue = []
     
-    def print_part(self, env: Environment, part: Part, printer: Printer = None):
+    def print_part(self, sim: "Simulation", part: Part, printer: Printer = None):
         """
         Simulates printing the given `part`
         """
@@ -90,13 +93,13 @@ class PrinterFleet:
             # simulate printing
             print_time = part.print_time * printer.service_modifier
             
-            yield env.timeout(print_time)
+            yield sim.env.timeout(print_time)
         
-        print(f"printed: {env.now} ({self.printers.index(printer)})")
+        print(f"printed: {sim.env.now} ({self.printers.index(printer)})")
         
-        self.check_queue(env)
+        self.check_queue(sim)
     
-    def check_queue(self, env: Environment):
+    def check_queue(self, sim: "Simulation"):
         """
         Checks to see if there are parts remaining in the queue
         """
@@ -119,7 +122,7 @@ class PrinterFleet:
         # remove part and process
         self.queue.remove(part)
         
-        env.process(self.print_part(env, part, printer))
+        sim.env.process(self.print_part(sim, part, printer))
     
     def get_printer(self, part: Part) -> Printer:
         """

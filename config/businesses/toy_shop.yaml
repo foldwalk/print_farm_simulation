@@ -1,4 +1,4 @@
-arrival_rate: 0.5
+arrival_rate: 1.5
 number_of_jobs: 10
 part_distribution:
 - weight: 0.50
