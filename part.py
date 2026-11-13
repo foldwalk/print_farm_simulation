@@ -16,6 +16,12 @@ class Part:
     
     print_time: float
     """The time required for a print to finish"""
+    
+    day_idx: int = 0
+    """The day index this part was created at"""
+    
+    job_idx: int = 0
+    """The job index this part was created at"""
 
 class PartPool:
     """
@@ -24,11 +30,13 @@ class PartPool:
     
     def __init__(self, part_distribution: list[PartDistribution]):
         self.weights = [part.weight for part in part_distribution]
-        self.parts = [Part(part.size, part.print_time) for part in part_distribution]
+        self.parts = [(part.size, part.print_time) for part in part_distribution]
     
-    def get_part(self) -> Part:
+    def get_part(self, day_idx: int, job_idx: int) -> Part:
         """
         Gets a random `Part` from the random weighted distribution
         """
         
-        return random.choices(self.parts, self.weights)[0]
+        part_info = random.choices(self.parts, self.weights)[0]
+        
+        return Part(*part_info, day_idx=day_idx, job_idx=job_idx)

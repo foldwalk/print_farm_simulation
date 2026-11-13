@@ -91,14 +91,14 @@ class PrinterFleet:
             yield request
             
             # log queue exit
-            sim.monitor.log_queue(sim.curr_day, sim.curr_job)
+            sim.monitor.log_queue(part.day_idx, part.job_idx)
             
             # simulate printing
             print_time = part.print_time * printer.service_modifier
             yield sim.env.timeout(print_time)
             
             # log service exit
-            sim.monitor.log_queue(sim.curr_day, sim.curr_job)
+            sim.monitor.log_service(part.day_idx, part.job_idx)
         
         print(f"printed: {sim.env.now} ({self.printers.index(printer)})")
         
