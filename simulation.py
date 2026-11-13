@@ -19,11 +19,11 @@ class Simulation:
         business_config: BusinessConfig = parse_business_config(business_path)
         space_config: BusinessConfig = parse_space_config(space_path)
         
-        print(business_config)
-        
         # initialize rng and monitoring
         self.rng = np.random.default_rng(seed=14)
-        self.monitor = Monitoring(business_config.number_of_jobs * DAYS)
+        self.monitor = Monitoring(self, DAYS, business_config.number_of_jobs)
+        self.curr_day = 0
+        self.curr_job = 0
         
         # available captital
         self.capital: int = 10_000
@@ -44,6 +44,9 @@ class Simulation:
         # run simulation
         self.env.process(self.process())
         self.env.run(until=HOURS * DAYS)
+        
+        # store results
+        self.monitor.store_results()
     
     def process(self):
         """
@@ -52,14 +55,17 @@ class Simulation:
         
         # while True:
         for day in range(DAYS):
+            self.curr_day = day
             print(f"=== Day {day} ===")
             
             for job in range(self.number_of_jobs):
+                self.curr_job = job
+                
                 # wait for new part
                 arrival_time = self.rng.exponential(1.0 / self.arrival_rate)
                 yield self.env.timeout(arrival_time)
                 
-                self.monitor.log_arrival(job + day * self.number_of_jobs, self.env.now)
+                self.monitor.log_arrival(day, job)
                 
                 # select random part
                 part = self.part_pool.get_part()
