@@ -53,7 +53,8 @@ class Simulation:
         
         # while True:
         for day in range(DAYS):
-            print(f"=== Day {day} ===")
+            # create a monitor point for new day
+            self.monitor.update_queue_count(len(self.fleet.queue))
             
             for job in range(self.number_of_jobs):
                 # wait for new part
@@ -64,8 +65,6 @@ class Simulation:
                 
                 # select random part
                 part = self.part_pool.get_part(day, job)
-                
-                print(f"arrived: {self.env.now} ({part})")
                 
                 self.env.process(self.fleet.print_part(self, part))
         

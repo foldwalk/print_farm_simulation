@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from simulation import Simulation
 
 # ============================================================ #
-# = Config classes
+#  Config classes
 # ============================================================ #
 @dataclass
 class PrinterInfo:
@@ -34,7 +34,7 @@ class PrinterInfo:
     """How long the printer takes to clean off once a print is finished"""
 
 # ============================================================ #
-# = Printer Logic
+#  Printer Logic
 # ============================================================ #
 class Printer(Resource):
     def __init__(self, sim: "Simulation", info: PrinterInfo):
@@ -83,6 +83,8 @@ class PrinterFleet:
         
             if not printer:
                 self.queue.append(part)
+                sim.monitor.update_queue_count(len(self.queue))
+                
                 return
         
         # do simulation
@@ -99,8 +101,6 @@ class PrinterFleet:
             
             # log service exit
             sim.monitor.log_service(part.day_idx, part.job_idx)
-        
-        print(f"printed: {sim.env.now} ({self.printers.index(printer)})")
         
         self.check_queue(sim)
     
@@ -126,6 +126,7 @@ class PrinterFleet:
         
         # remove part and process
         self.queue.remove(part)
+        sim.monitor.update_queue_count(len(self.queue))
         
         sim.env.process(self.print_part(sim, part, printer))
     
@@ -153,7 +154,7 @@ class PrinterFleet:
         return sorted(printers, key=lambda p: p.service_modifier)
 
 # ============================================================ #
-# = Defined Printers
+#  Defined Printers
 # ============================================================ #
 NAMED_PRINTERS: dict[str, PrinterInfo] = {
     # === Entry-Level Printers === #

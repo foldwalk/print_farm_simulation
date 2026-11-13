@@ -16,7 +16,28 @@ class Monitoring:
         self.arrival_times: np.ndarray = np.zeros((num_days, num_jobs), dtype=np.float64)
         self.queue_times: np.ndarray = np.zeros((num_days, num_jobs), dtype=np.float64)
         self.service_times: np.ndarray = np.zeros((num_days, num_jobs), dtype=np.float64)
+        
+        self.queue_count_times: list[float] = []
+        self.queue_counts: list[float] = []
     
+    def store_results(self):
+        """Saves the results into a file"""
+        
+        # create storage path
+        path = Path("runs") / datetime.now().strftime(r"%Y%m%d-%H%M%S")
+        
+        # store results
+        np.savez(path, **{
+            'arrival_times': self.arrival_times,
+            'queue_times': self.queue_times,
+            'service_times': self.service_times,
+            'queue_count_times': np.array(self.queue_count_times, dtype=np.float64),
+            'queue_counts': np.array(self.queue_counts, dtype=np.int64),
+        })
+    
+    # ============================================================ #
+    #  Time Logging
+    # ============================================================ #
     def log_arrival(self, day_idx: int, job_idx: int) -> None:
         """Logs the arrival of job `job_idx` to the system"""
         
@@ -32,14 +53,9 @@ class Monitoring:
         
         self.service_times[day_idx, job_idx] = self.sim.env.now
     
-    def store_results(self):
-        """Saves the results into a file"""
-        
-        # create storage path
-        path = Path("runs") / datetime.now().strftime(r"%Y%m%d-%H%M%S")
-        path.mkdir(parents=True, exist_ok=True)
-        
-        # store results
-        np.save(path / "arrival_times.npy", self.arrival_times)
-        np.save(path / "queue_times.npy", self.queue_times)
-        np.save(path / "service_times.npy", self.service_times)
+    # ============================================================ #
+    #  Counts
+    # ============================================================ #
+    def update_queue_count(self, count: int) -> None:
+        self.queue_count_times.append(self.sim.env.now)
+        self.queue_counts.append(count)
