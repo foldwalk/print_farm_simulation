@@ -1,3 +1,5 @@
+import math
+
 from typing import Literal, TYPE_CHECKING
 from dataclasses import dataclass
 
@@ -45,8 +47,13 @@ class Printer(Resource):
         super().__init__(sim.env)
         
         # unload info
+        self.info = info
         self.service_modifier = info.service_modifier
         self.size = info.size
+        self.failure_rate = info.failure_rate
+        self.repair_time = info.repair_time
+        self.clean_time = info.clean_time
+        self.state = 'idle'
     
     def is_compatible(self, part: Part) -> bool:
         """
@@ -61,6 +68,12 @@ class Printer(Resource):
             return False
         
         return True
+    
+    def is_available(self) -> bool:
+        """
+        Returns `True` if the printer is idle and not in a maintenance state.
+        """
+        return self.count == 0 and self.state == 'idle'
 
 class PrinterFleet:
     def __init__(self, sim: "Simulation", printers: list[PrinterInfo]):
@@ -69,6 +82,7 @@ class PrinterFleet:
         """
         
         self.printers = [Printer(sim, info) for info in printers]
+        sim.monitor.set_printer_inventory(self.printers)
         
         self.queue = []
     
@@ -87,21 +101,59 @@ class PrinterFleet:
                 
                 return
         
+        printer_idx = self.printers.index(printer)
+
         # do simulation
         with printer.request() as request:
             # wait for request (should never wait)
             yield request
+            printer.state = 'busy'
+            sim.monitor.start_printer_usage(printer_idx)
             
             # log queue exit
             sim.monitor.log_queue(part.day_idx, part.job_idx)
             
-            # simulate printing
+            # simulate printing with a hazard-based chance of failure during the run
             print_time = part.print_time * printer.service_modifier
-            yield sim.env.timeout(print_time)
-            
-            # log service exit
+            failure_time = None
+
+            if printer.failure_rate > 0:
+                failure_probability = 1.0 - math.exp(-printer.failure_rate * print_time)
+                if sim.rng.random() < failure_probability:
+                    failure_time = sim.rng.uniform(0.0, print_time)
+
+            service_duration = print_time if failure_time is None else min(print_time, failure_time)
+            yield sim.env.timeout(service_duration)
+            sim.monitor.end_printer_usage(printer_idx)
+
+            if failure_time is not None and service_duration == failure_time:
+                # The job failed mid-print, so the printer is taken out of service.
+                # The part must be retried after repair.
+                printer.state = 'failed'
+                sim.monitor.log_printer_failure(printer_idx)
+                self.queue.append(part)
+                sim.monitor.update_queue_count(len(self.queue))
+                yield sim.env.timeout(printer.repair_time)
+
+                printer.state = 'cleaning'
+                if printer.clean_time > 0:
+                    sim.monitor.log_printer_cleaning(printer_idx, printer.clean_time, failed=True)
+                    yield sim.env.timeout(printer.clean_time)
+
+                printer.state = 'idle'
+                self.check_queue(sim)
+                return
+
+            # log service exit only for successful completions
             sim.monitor.log_service(part.day_idx, part.job_idx)
-        
+
+        # clean the printer before it is considered available again
+        printer.state = 'cleaning'
+        if printer.clean_time > 0:
+            sim.monitor.log_printer_cleaning(printer_idx, printer.clean_time, failed=False)
+            yield sim.env.timeout(printer.clean_time)
+
+        printer.state = 'idle'
         self.check_queue(sim)
     
     def check_queue(self, sim: "Simulation"):
@@ -137,7 +189,7 @@ class PrinterFleet:
         """
         
         # get available printers
-        free_printers: list[Printer] = [printer for printer in self.printers if printer.count == 0]
+        free_printers: list[Printer] = [printer for printer in self.printers if printer.is_available()]
         free_printers = [printer for printer in free_printers if printer.is_compatible(part)]
         
         if not free_printers:
